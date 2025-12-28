@@ -1,24 +1,26 @@
 import numpy as np
 
+def market_regime(candles):
+    closes = np.array([c["close"] for c in candles])
+    returns = np.diff(closes) / closes[:-1]
+
+    vol = np.std(returns)
+    slope = np.polyfit(range(len(closes)), closes, 1)[0]
+
+    if vol < 0.001:
+        return "flat"
+    if abs(slope) > vol * 2:
+        return "trend"
+    return "volatile"
+
+
 def trend_signal(candles):
-    if len(candles) < 8:
-        return 0.5, 0.0
-    closes = np.array([c["close"] for c in candles[-8:]])
-    
-    # Вычисляем корреляцию вручную, чтобы избежать деления на ноль
-    x = np.arange(8)
-    mean_x = np.mean(x)
-    mean_y = np.mean(closes)
-    
-    cov = np.sum((x - mean_x) * (closes - mean_y))
-    std_x = np.std(x)
-    std_y = np.std(closes)
-    
-    if std_x == 0 or std_y == 0:
-        trend_strength = 0.0  # нет вариации → нет тренда
-    else:
-        trend_strength = cov / (std_x * std_y * 8)  # нормализованная корреляция (-1 до 1)
-    
-    prob_up = (trend_strength + 1) / 2
-    confidence = abs(trend_strength)
-    return prob_up, confidence
+    closes = np.array([c["close"] for c in candles])
+    ma_fast = closes[-5:].mean()
+    ma_slow = closes[-20:].mean()
+
+    if ma_fast > ma_slow:
+        return 0.65
+    elif ma_fast < ma_slow:
+        return 0.35
+    return 0.5
