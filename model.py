@@ -1,13 +1,15 @@
-from sklearn.linear_model import LogisticRegression
+import numpy as np
 
-class CandleModel:
-    def __init__(self):
-        self.m = LogisticRegression()
-        self.trained = False
+class SimpleProbModel:
+    """
+    Лёгкая ML-модель без переобучения
+    """
 
-    def fit(self, X, y):
-        self.m.fit(X, y)
-        self.trained = True
+    def predict_proba(self, X):
+        momentum = X[:, 0]
+        volatility = X[:, 1]
 
-    def predict(self, X):
-        return self.m.predict_proba(X)
+        prob_up = 0.5 + 0.4 * momentum - 0.3 * volatility
+        prob_up = np.clip(prob_up, 0.05, 0.95)
+
+        return np.vstack([1 - prob_up, prob_up]).T
